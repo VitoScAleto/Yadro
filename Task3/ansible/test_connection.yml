@@ -1,0 +1,25 @@
+
+- name: Тест подключения к удалённому серверу
+  hosts: remote_server
+  gather_facts: yes
+  
+  tasks:
+    - name: "Проверка SSH подключения"
+      ping:
+    
+    - name: "Получение информации о системе"
+      debug:
+        msg: 
+          - "Хост: {{ inventory_hostname }}"
+          - "IP: {{ ansible_host }}"
+          - "ОС: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+          - "Пользователь: {{ ansible_user }}"
+    
+    - name: "Проверка sudo прав"
+      command: whoami
+      become: yes
+      register: sudo_user
+    
+    - name: "Sudo пользователь"
+      debug:
+        msg: "Sudo работает, текущий пользователь: {{ sudo_user.stdout }}"

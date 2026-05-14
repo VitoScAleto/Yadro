@@ -1,0 +1,54 @@
+- name: Проверка работы скрипта в контейнере
+  hosts: remote_server
+  gather_facts: yes
+
+  vars:
+    image_name: "vitoscaleto/yadro-test-http:latest" 
+    container_name: "yadro_test_http"
+  tasks:
+  - name: "Проверка наличия Docker"
+    command: docker --version
+    register: docker_check
+
+  - name: "Скачивание Docker образа из registry"
+    docker_image:
+      name: "{{ image_name }}"
+      source: pull
+      force_source: yes
+    register: image_pull
+    
+  - name: "Информация об образе"
+    debug:
+      msg:
+        - "Образ скачан: {{ image_name }}"
+
+  - name: "Запуск контейнера"
+    docker_container:
+      name: "{{ container_name }}"
+      image: "{{ image_name }}"
+      state: started
+      detach: yes
+    register: container
+    
+  - name: "Информация о запуске"
+    debug:
+      msg: "Контейнер запущен: {{ container_name }}"
+  
+  - name: "Ожидание завершения контейнера"
+    command: docker wait {{ container_name }}
+    register: exit_code
+    changed_when: false
+    
+  - name: "Код завершения"
+    debug:
+      msg: "Контейнер завершился с кодом: {{ exit_code.stdout }}"
+    
+  - name: "Получение логов контейнера"
+    command: docker logs {{ container_name }}
+    register: container_logs
+    changed_when: false
+
+  - name: "Logs"
+    debug:
+      msg:
+        - "{{ container_logs.stderr }}"
